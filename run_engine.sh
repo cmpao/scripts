@@ -28,7 +28,7 @@ fi
 ALLOW_FILE=rules.yml
 ALLOW_FILE=fullaccess.yml
 
-SETTINGS=" --migrationport -1 --EnableInternalTest -P ${PORT} -S LockD=65522 -S AcceptEULA=yes -S Gen3=1 --WsPath=${CLIENT_DIR} -S EnableABAC=1 -S PersistenceMode=2 -S QvLogUseStdoutLogger=1 -S TrafficLogVerbosity=2 -S EnableAccessControlTrace=1 -S DocumentDirectory=${APP_DIR} -S StoragePath=${STORAGE_DIR}/Engine_${PORT} -S SystemLogVerbosity=4 -S EnableFilePolling=0 -S BuildAppCacheAtStartup=0 -S EnableCrashDump=0 -S EnablePrometheus=0 -S UseEventBus=1 -S UseSTAN=1 -S STANUrl=nats://localhost:4222 -S STANCluster=test-cluster -S AdjustMemUseFromOs=0 -S Autosave=1 -S AutosaveInterval=5 -S SystemRules=${ENGINE_ROOT}/test/qlikviewTests/ProtocolTester4Net/Resources/rules/${ALLOW_FILE} -S ValidateJsonWebTokens=0 -S SessionLogVerbosity=4 "
+SETTINGS=" --migrationport -1 --EnableInternalTest -P ${PORT} -S LockD=65522 -S AcceptEULA=yes -S Gen3=1 --WsPath=${CLIENT_DIR} -S EnableABAC=1 -S PersistenceMode=2 -S QvLogUseStdoutLogger=1 -S TrafficLogVerbosity=2 -S EnableAccessControlTrace=1 -S DocumentDirectory=${APP_DIR} -S StoragePath=${STORAGE_DIR}/Engine_${PORT} -S SystemLogVerbosity=4 -S EnableFilePolling=0 -S BuildAppCacheAtStartup=0 -S EnableCrashDump=0 -S EnablePrometheus=0 -S UseSTAN=1 -S STANUrl=nats://localhost:4222 -S STANCluster=test-cluster -S STANClientId=engine-${PORT} -S AdjustMemUseFromOs=0 -S Autosave=1 -S AutosaveInterval=5 -S SystemRules=${ENGINE_ROOT}/test/qlikviewTests/ProtocolTester4Net/Resources/rules/${ALLOW_FILE} -S ValidateJsonWebTokens=0 -S SessionLogVerbosity=4 -S UseEventBus=1"
 
 #-S CrashDumpPath=/crash -S CrashDumpURL=https://qlik.sp.backtrace.io:6098" #-S EventBusName=NATS -S EventBusUrl=nats://localhost:4222 -S Autosave=1 -S AutosaveInterval=3  "
 
