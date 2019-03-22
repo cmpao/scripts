@@ -19,7 +19,7 @@
 (defun qlik-engine-path (path)
   (concat *qlik-engine-root* path))
 
-(defvar *qlik-engine-full-access* t)
+(defvar *qlik-engine-full-access* nil)
 
 (defun qlik-engine-allow-path ()
   (qlik-engine-path (concat "test/qlikviewTests/ProtocolTester4Net/Resources/rules/"
@@ -45,7 +45,9 @@
       (PersistenceMode 2)
       (BuildAppCacheAtStartup 0)
       (SystemRules ,(qlik-engine-allow-path))
-      (UseSTAN 0)
+      (UseEventBus 1)
+      (UseEventTransactions 1)
+      (UseSTAN 1)
       (STANUrl nats://localhost:4222)
       (STANCluster test-cluster)
       (ValidateJsonWebTokens 0)
@@ -67,8 +69,8 @@
   (interactive)
   (qlik-cd-engine-root)
   (gdb (concat "gdb -i=mi --args Packages/Engine/engine-sym "
-               (qlik-engine-options-string))))
-;;  (gdb-many-windows))
+               (qlik-engine-options-string)))
+  (gdb-many-windows))
 
 (global-set-key (kbd "C-c d") 'qlik-engine-debug)
 
@@ -80,15 +82,27 @@
 
 (global-set-key (kbd "C-c r") 'qlik-engine-debug-remote)
 
+(defun qlik-engine-src-dir ()
+  (concat *qlik-engine-root* "src/"))
+
+(defun qlik-engine-build-dir ()
+  (concat *qlik-engine-root*
+          "build/"
+          (replace-regexp-in-string "/" "-" (shell-command-to-string "printf %s \"$(git rev-parse --abbrev-ref HEAD)\""))
+          "-release/"))
+
+(defun qlik-engine-qix-dir ()
+  (concat (qlik-engine-build-dir) "src/Qidl/gen/Qix/"))
+
 ;; Ctags
 (defun qlik-ctags-c++ ()
   (interactive)
-  (let* ((ctags-root (read-directory-name "Tags root: " (concat *qlik-engine-root* "src/")))
-         (ctags-file (concat ctags-root "TAGS")))
+  (let* ((ctags-dirs (concat (qlik-engine-src-dir) " " (qlik-engine-qix-dir)))
+         (ctags-file (concat *qlik-engine-root* "TAGS")))
     (shell-command (concat "ctags -e -R --c++-kinds=+p --fields=+iaS --extra=+q -f "
                            ctags-file
                            " "
-                           ctags-root))
+                           ctags-dirs))
     (visit-tags-table ctags-file)))
 
 (defun qlik-engine-rgrep ()
