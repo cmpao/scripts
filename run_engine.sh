@@ -2,7 +2,7 @@
 
 set -e
 
-ENGINE_ROOT=/home/cmp/files/engine_fix
+ENGINE_ROOT=/home/cmp/files/engine
 APP_DIR=${ENGINE_ROOT}/Packages/G3
 STORAGE_DIR=${ENGINE_ROOT}/Packages
 CLIENT_DIR=${ENGINE_ROOT}/Packages/Client
@@ -32,4 +32,4 @@ SETTINGS=" --migrationport -1 --EnableInternalTest -P ${PORT} -S LockD=65522 -S 
 
 #-S CrashDumpPath=/crash -S CrashDumpURL=https://qlik.sp.backtrace.io:6098" #-S EventBusName=NATS -S EventBusUrl=nats://localhost:4222 -S Autosave=1 -S AutosaveInterval=3  "
 
-${COMMAND} ${SETTINGS} $@
+${COMMAND} ${SETTINGS} $@ | jq
