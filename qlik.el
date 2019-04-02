@@ -47,6 +47,8 @@
       (SystemRules ,(qlik-engine-allow-path))
       (UseEventBus 1)
       (UseEventTransactions 1)
+      (EventTransactionsDirectory ,(qlik-engine-path "Packages/event_transactions"))
+      (EventBusLogVerbosity 5)
       (UseSTAN 1)
       (STANUrl nats://localhost:4222)
       (STANCluster test-cluster)
@@ -55,24 +57,31 @@
                                         ;(AutosaveInterval 3)
       ))
 
-(defun qlik-engine-settings-to-string ()
+(defun qlik-engine-settings-to-string (settings)
   (with-output-to-string
     (mapc (lambda (s)
             (princ (format " -S %s=%s" (car s) (cadr s))))
-          (qlik-engine-settings))))
+          settings)))
 
-(defun qlik-engine-options-string ()
-  (concat " --WsPath " (qlik-engine-path "Packages/Client") " --EnableInternalTest --MigrationPort -1 -p 9076 "
-          (qlik-engine-settings-to-string)))
+(defun qlik-engine-options-string (port)
+  (concat " --WsPath " (qlik-engine-path "Packages/Client") " --EnableInternalTest --MigrationPort -1 -p " port " "
+          (qlik-engine-settings-to-string (qlik-engine-settings))))
 
 (defun qlik-engine-debug ()
   (interactive)
   (qlik-cd-engine-root)
   (gdb (concat "gdb -i=mi --args Packages/Engine/engine-sym "
-               (qlik-engine-options-string)))
+               (qlik-engine-options-string "9076")))
   (gdb-many-windows))
 
 (global-set-key (kbd "C-c d") 'qlik-engine-debug)
+
+(defun qlik-engine-run ()
+  (interactive)
+  (qlik-cd-engine-root)
+  (shell)
+  (rename-uniquely)
+  (insert (concat "./Packages/Engine/engine-sym " (qlik-engine-options-string (read-string "port: " "9076")) " | jq ")))
 
 (defun qlik-engine-debug-remote ()
   (interactive)
