@@ -19,11 +19,11 @@
 (defun qlik-engine-path (path)
   (concat *qlik-engine-root* path))
 
-(defvar *qlik-engine-full-access* nil)
+(defun qlik-engine-full-access () t)
 
 (defun qlik-engine-allow-path ()
   (qlik-engine-path (concat "test/qlikviewTests/ProtocolTester4Net/Resources/rules/"
-                            (if *qlik-engine-full-access*
+                            (if (qlik-engine-full-access)
                                 "fullaccess.yml"
                               "rules.yml"))))
 
