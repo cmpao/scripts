@@ -54,6 +54,7 @@
       (STANCluster test-cluster)
       (STANMaxReconnect 60)
       (ValidateJsonWebTokens 0)
+      (ShutdownWait 1)
                                         ;(Autosave 1)
                                         ;(AutosaveInterval 3)
       ))
