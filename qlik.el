@@ -52,6 +52,7 @@
       (UseSTAN 1)
       (STANUrl nats://localhost:4222)
       (STANCluster test-cluster)
+      (STANMaxReconnect 60)
       (ValidateJsonWebTokens 0)
                                         ;(Autosave 1)
                                         ;(AutosaveInterval 3)
@@ -76,20 +77,60 @@
 
 (global-set-key (kbd "C-c d") 'qlik-engine-debug)
 
-(defun qlik-engine-run ()
-  (interactive)
-  (qlik-cd-engine-root)
-  (shell)
+(defun run-command-in-buffer (name command)
+  (generate-new-buffer name)
+  (switch-to-buffer name)
   (rename-uniquely)
-  (insert (concat "./Packages/Engine/engine-sym " (qlik-engine-options-string (read-string "port: " "9076")) " | jq ")))
+  (async-shell-command command (current-buffer)))
+
+(defun stan-server-run ()
+  (interactive)
+  (run-command-in-buffer "run-stan" "docker run --net=host -v /home/cmp/files/nats_store:/store nats-streaming -SD -store file -dir /store"))
+
+(defun qlik-engine-run (&optional port)
+  (interactive)
+  (unless port
+    (setq port (string-to-number (read-string "port: " "9076"))))
+  (qlik-cd-engine-root)
+  (run-command-in-buffer "run-engine"
+                         (concat *qlik-engine-root*
+                                 "Packages/Engine/engine-sym "
+                                 (qlik-engine-options-string (number-to-string port))
+                                 " | jq")))
+
+(global-set-key (kbd "C-c r") 'qlik-engine-run)
+
+(defun qlik-engine-run-all()
+  (interactive)
+  (delete-other-windows)
+  (stan-server-run)
+  (qlik-engine-run 9076)
+  (split-window-right)
+  (qlik-engine-run 9077))
+
+(defun stop-running-shell (name)
+  (switch-to-buffer name)
+  (comint-interrupt-subjob)
+  (while (process-live-p (get-buffer-process (current-buffer)))
+    (sleep-for 0 200))
+  (kill-buffer name))
+
+(defun qlik-engine-stop-all ()
+  (interactive)
+  (map 'list
+       (lambda (buf)
+         (stop-running-shell (buffer-name buf)))
+       (remove-if-not (lambda (buf)
+                        (string-match-p "run-engine.*" (buffer-name buf)))
+                      (buffer-list)))
+  (stop-running-shell "run-stan<2>")
+  (delete-other-windows))
 
 (defun qlik-engine-debug-remote ()
   (interactive)
   (insert (concat "target remote "
                   (read-string "ip: " "172.18.0.2")
                   ":2345")))
-
-(global-set-key (kbd "C-c r") 'qlik-engine-debug-remote)
 
 (defun qlik-engine-src-dir ()
   (concat *qlik-engine-root* "src/"))
