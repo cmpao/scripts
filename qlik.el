@@ -43,7 +43,7 @@
       (Gen3 1)
       (EnableABAC 1)
       (PersistenceMode 2)
-      (BuildAppCacheAtStartup 0)
+      (BuildAppCacheAtStartup 1)
       (SystemRules ,(qlik-engine-allow-path))
       (UseEventBus 1)
       (UseEventTransactions 1)
@@ -55,8 +55,8 @@
       (STANMaxReconnect 60)
       (ValidateJsonWebTokens 0)
       (ShutdownWait 1)
-                                        ;(Autosave 1)
-                                        ;(AutosaveInterval 3)
+      (Autosave 0)
+      (AutosaveInterval 5)
       ))
 
 (defun qlik-engine-settings-to-string (settings)
@@ -73,7 +73,7 @@
   (interactive)
   (qlik-cd-engine-root)
   (gdb (concat "gdb -i=mi --args Packages/Engine/engine-sym "
-               (qlik-engine-options-string "9076")))
+               (qlik-engine-options-string "9079")))
   (gdb-many-windows))
 
 (global-set-key (kbd "C-c d") 'qlik-engine-debug)
@@ -88,7 +88,7 @@
   (interactive)
   (run-command-in-buffer "run-stan" "docker run --net=host -v /home/cmp/files/nats_store:/store nats-streaming -SD -store file -dir /store"))
 
-(defun qlik-engine-run (&optional port)
+(defun qlik-engine-run (&optional port settings)
   (interactive)
   (unless port
     (setq port (string-to-number (read-string "port: " "9076"))))
@@ -97,6 +97,7 @@
                          (concat *qlik-engine-root*
                                  "Packages/Engine/engine-sym "
                                  (qlik-engine-options-string (number-to-string port))
+                                 (qlik-engine-settings-to-string settings)
                                  " | jq")))
 
 (global-set-key (kbd "C-c r") 'qlik-engine-run)
@@ -107,7 +108,7 @@
   (stan-server-run)
   (qlik-engine-run 9076)
   (split-window-right)
-  (qlik-engine-run 9077))
+  (qlik-engine-run 9077 '((EventBusSubscribe 1))))
 
 (defun stop-running-shell (name)
   (switch-to-buffer name)
@@ -118,12 +119,11 @@
 
 (defun qlik-engine-stop-all ()
   (interactive)
-  (map 'list
-       (lambda (buf)
-         (stop-running-shell (buffer-name buf)))
-       (remove-if-not (lambda (buf)
-                        (string-match-p "run-engine.*" (buffer-name buf)))
-                      (buffer-list)))
+  (mapc (lambda (buf)
+          (stop-running-shell (buffer-name buf)))
+        (cl-remove-if-not (lambda (buf)
+                            (string-match-p "run-engine.*" (buffer-name buf)))
+                          (buffer-list)))
   (stop-running-shell "run-stan<2>")
   (delete-other-windows))
 
