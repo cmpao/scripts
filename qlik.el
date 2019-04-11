@@ -52,7 +52,7 @@
       (UseSTAN 1)
       (STANUrl nats://localhost:4222)
       (STANCluster test-cluster)
-      (STANMaxReconnect 60)
+      (STANMaxReconnect 120)
       (ValidateJsonWebTokens 0)
       (ShutdownWait 1)
       (Autosave 0)
@@ -89,9 +89,13 @@
   (interactive)
   (run-command-in-buffer "run-stan" "docker run --net=host -v /home/cmp/files/nats_store:/store nats-streaming -SD -store file -dir /store"))
 
+(global-set-key (kbd "C-c n r") 'stan-server-run)
+
 (defun stan-server-stop ()
   (interactive)
   (stop-running-shell "run-stan"))
+
+(global-set-key (kbd "C-c n s") 'stan-server-stop)
 
 (defun qlik-engine-run (&optional port settings)
   (interactive)
@@ -105,12 +109,21 @@
                                  (qlik-engine-settings-to-string settings)
                                  " | jq")))
 
-(global-set-key (kbd "C-c r") 'qlik-engine-run)
+(global-set-key (kbd "C-c e r") 'qlik-engine-run)
 
 (defun qlik-engine-stop (port)
   (interactive "nPort:")
   (stop-running-shell
    (concat "run-engine-" (number-to-string port))))
+
+(global-set-key (kbd "C-c e s") 'qlik-engine-stop)
+
+(defun qlik-engine-kill (port)
+  (interactive "nPort:")
+  (stop-running-shell
+   (concat "run-engine-" (number-to-string port)) t))
+
+(global-set-key (kbd "C-c e k") 'qlik-engine-kill)
 
 (defun qlik-engine-stop-all ()
   (interactive)
@@ -119,7 +132,10 @@
   (stan-server-stop)
   (delete-other-windows))
 
+(global-set-key (kbd "C-c s") 'qlik-engine-stop-all)
+
 (defun qlik-engines ()
+  "(port (settings))"
   '((9076 ())
     (9077 ((EventBusSubscribe 1)))))
 
@@ -135,9 +151,13 @@
        (split-window-right)))
    (qlik-engines)))
 
-(defun stop-running-shell (name)
+(global-set-key (kbd "C-c a") 'qlik-engine-run-all)
+
+(defun stop-running-shell (name &optional kill)
   (switch-to-buffer name)
-  (comint-interrupt-subjob)
+  (if kill
+    (comint-kill-subjob)
+    (comint-interrupt-subjob))
   (while (process-live-p (get-buffer-process (current-buffer)))
     (sleep-for 0 200))
   (kill-buffer name))
