@@ -89,6 +89,10 @@
   (interactive)
   (run-command-in-buffer "run-stan" "docker run --net=host -v /home/cmp/files/nats_store:/store nats-streaming -SD -store file -dir /store"))
 
+(defun stan-server-stop ()
+  (interactive)
+  (stop-running-shell "run-stan"))
+
 (defun qlik-engine-run (&optional port settings)
   (interactive)
   (unless port
@@ -103,13 +107,33 @@
 
 (global-set-key (kbd "C-c r") 'qlik-engine-run)
 
+(defun qlik-engine-stop (port)
+  (interactive "nPort:")
+  (stop-running-shell
+   (concat "run-engine-" (number-to-string port))))
+
+(defun qlik-engine-stop-all ()
+  (interactive)
+  (mapc (lambda (e) (qlik-engine-stop (car e)))
+        (qlik-engines))
+  (stan-server-stop)
+  (delete-other-windows))
+
+(defun qlik-engines ()
+  '((9076 ())
+    (9077 ((EventBusSubscribe 1)))))
+
 (defun qlik-engine-run-all()
   (interactive)
   (delete-other-windows)
   (stan-server-run)
-  (qlik-engine-run 9076)
-  (split-window-right)
-  (qlik-engine-run 9077 '((EventBusSubscribe 1))))
+  (mapc
+   (lambda (e)
+     (apply #'qlik-engine-run e)
+     (unless (eql (car e)
+                  (caar (last (qlik-engines))))
+       (split-window-right)))
+   (qlik-engines)))
 
 (defun stop-running-shell (name)
   (switch-to-buffer name)
@@ -117,16 +141,6 @@
   (while (process-live-p (get-buffer-process (current-buffer)))
     (sleep-for 0 200))
   (kill-buffer name))
-
-(defun qlik-engine-stop-all ()
-  (interactive)
-  (mapc (lambda (buf)
-          (stop-running-shell (buffer-name buf)))
-        (cl-remove-if-not (lambda (buf)
-                            (string-match-p "run-engine.*" (buffer-name buf)))
-                          (buffer-list)))
-  (stop-running-shell "run-stan")
-  (delete-other-windows))
 
 (defun qlik-engine-debug-remote ()
   (interactive)
