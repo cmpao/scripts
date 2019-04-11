@@ -78,10 +78,11 @@
 
 (global-set-key (kbd "C-c d") 'qlik-engine-debug)
 
-(defun run-command-in-buffer (name command)
+(defun run-command-in-buffer (name command &optional unique)
   (generate-new-buffer name)
   (switch-to-buffer name)
-  (rename-uniquely)
+  (when unique
+    (rename-uniquely))
   (async-shell-command command (current-buffer)))
 
 (defun stan-server-run ()
@@ -93,7 +94,7 @@
   (unless port
     (setq port (string-to-number (read-string "port: " "9076"))))
   (qlik-cd-engine-root)
-  (run-command-in-buffer "run-engine"
+  (run-command-in-buffer (concat "run-engine-" (number-to-string port))
                          (concat *qlik-engine-root*
                                  "Packages/Engine/engine-sym "
                                  (qlik-engine-options-string (number-to-string port))
@@ -124,7 +125,7 @@
         (cl-remove-if-not (lambda (buf)
                             (string-match-p "run-engine.*" (buffer-name buf)))
                           (buffer-list)))
-  (stop-running-shell "run-stan<2>")
+  (stop-running-shell "run-stan")
   (delete-other-windows))
 
 (defun qlik-engine-debug-remote ()
