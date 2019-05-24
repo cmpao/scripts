@@ -1,0 +1,56 @@
+{
+	"settings": {
+		"timeout": 300,
+		"logs": {
+			"traffic": false,
+			"debug": false,
+			"filename": "logs/scenario.log"
+		}
+	},
+
+	"scheduler": {
+		"type": "simple",
+		"settings": {
+			"executiontime": -1,
+			"iterations": 1,
+			"rampupdelay": 1.0,
+			"concurrentusers": 1
+		}
+	},
+
+    "connectionSettings": {
+		"server": "rd-16132.qliktech.com",
+		"mode": "jwt",
+		"security": true,
+		"jwtsettings": {
+			"keypath": "gopherciser-key.pem",
+			"jwtheader" : "{\"kid\":\"rd-16132.qliktech.com\"}",
+			"claims": "{\"iss\":\"https://qlik.api.internal\",\"aud\":\"qlik.api\",\"sub\":\"{{.UserName}}\",\"name\":\"{{.UserName}}\",\"groups\": [\"Everyone\",\"rootadmin\"],\"exp\":{{(now.Add 18000000000000).Unix}}}"
+		}
+	},
+
+	"loginSettings" : {
+        "type": "prefix",
+        "settings": {
+		  "prefix": "gopher",
+		  "directory": "qtsel"
+        }
+	},
+
+	"scenario": [
+	{
+		"action": "ElasticOpenHub",
+		"settings": {
+			"streams": "all"
+		}
+	},	
+
+    {
+        "action": "ElasticDeleteApp",
+        "settings": {
+            "mode": "clearcollection",
+            "collectionname": "createapp"
+        }
+    }
+    ]
+}

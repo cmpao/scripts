@@ -1,0 +1,264 @@
+{
+	"settings" : {
+		"timeout" : 300,
+		"logs" : {
+			"traffic" : false,
+			"debug" : false,
+			"filename" : "logs/CreateAppHA.tsv"
+		}
+	},
+	"scheduler" : {
+		"type" : "simple",
+		"settings" : {
+			"executiontime" : -1,
+			"iterations" : 4,
+			"rampupdelay" : 3,
+			"concurrentusers" : 20,
+			"iterationtimebuffer": {
+				"mode": "onerror",
+				"duration": "10s"
+			}
+		}
+	},
+	"connectionSettings" : {
+		"server" : "https://rd-16132.qliktech.com",
+		"mode" : "jwt",
+		"security" : true,
+		"jwtsettings": {
+            "keypath": "gopherciser-key.pem",
+            "jwtheader" : "{\"kid\":\"rd-16132.qliktech.com\"}",
+            "claims": "{\"iss\":\"https://qlik.api.internal\",\"aud\":\"qlik.api\",\"sub\":\"{{.UserName}}\",\"name\":\"{{.UserName}}\",\"groups\": [\"Everyone\",\"Perfstab\",\"Exerciser\",\"rootadmin\"],\"exp\":{{(now.Add 18000000000000).Unix}}}"
+        }
+	},
+	"usercreation": {
+		"directory": "QTSEL",
+		"prefix": "Nunit1"
+    },
+	"loginSettings": {
+    "type": "prefix",
+		"settings": {
+			"directory": "QTSEL",
+			"prefix": "Nunit1"
+		}
+	},
+
+	"scenario" : [
+ 
+	{    
+	 "action": "ElasticOpenHub",
+     "label": "Opening collection createapp",
+		"settings": {
+			"streams": "fromlist",
+			"streamlist": ["createapp"]
+		}
+	},
+    {
+     "action": "ElasticCreateApp",
+     "label": "Create new app",
+		"settings": {
+			"title": "GopherCreated{{.Session}}",
+			"stream": "createapp",
+			"groups": ["Everyone"]
+		}
+	},
+    {
+      "label": "TimerDelay",
+      "action": "thinktime",
+		"settings": {
+			"type": "uniform",
+			"mean": 5.0,
+			"dev": 2.5
+		}
+    },
+	{
+    "action" : "ElasticShareApp",
+    "label": "Share GopherCreated to Everyone",
+    "settings": {
+        "title": "GopherCreated{{.Session}}",
+        "groups": ["Everyone"]
+		}
+    },
+    {
+      "label": "OpenApp",
+      "action": "OpenApp",
+		"settings": {
+			"appname": "GopherCreated{{.Session}}",
+			"mode": "nohub"
+		}
+    },
+		{
+      "label": "TimerDelay",
+      "action": "thinktime",
+		"settings": {
+			"type": "uniform",
+			"mean": 5.0,
+			"dev": 2.5
+		}
+    },
+	{
+    "action": "setscript",
+		"settings": {
+			"script" : "SET ThousandSep=' ';\r\nSET DecimalSep=',';\r\nSET MoneyThousandSep=' ';\r\nSET MoneyDecimalSep=',';\r\nSET MoneyFormat='# ##0,00 kr;-# ##0,00 kr';\r\nSET TimeFormat='hh:mm:ss';\r\nSET DateFormat='YYYY-MM-DD';\r\nSET TimestampFormat='YYYY-MM-DD hh:mm:ss[.fff]';\r\nSET FirstWeekDay=0;\r\nSET BrokenWeeks=0;\r\nSET ReferenceDay=4;\r\nSET FirstMonthOfYear=1;\r\nSET CollationLocale='sv-SE';\r\nSET CreateSearchIndexOnReload=1;\r\nSET MonthNames='jan.;feb.;mars;apr.;maj;juni;juli;aug.;sep.;okt.;nov.;dec.';\r\nSET LongMonthNames='januari;februari;mars;april;maj;juni;juli;augusti;september;oktober;november;december';\r\nSET DayNames='m\u00E5n;tis;ons;tors;fre;l\u00F6r;s\u00F6n';\r\nSET LongDayNames='m\u00E5ndag;tisdag;onsdag;torsdag;fredag;l\u00F6rdag;s\u00F6ndag';\r\nSET NumericalAbbreviation='3:k;6:M;9:G;12:T;15:P;18:E;21:Z;24:Y;-3:m;-6:\u03BC;-9:n;-12:p;-15:f;-18:a;-21:z;-24:y';\r\nCharacters:\r\nLoad Chr(RecNo()+Ord('A')-1) as Alpha, RecNo() as Num autogenerate 26;\r\n \r\nASCII:\r\nLoad \r\n if(RecNo()>=65 and RecNo()<=90,RecNo()-64) as Num,\r\n Chr(RecNo()) as AsciiAlpha, \r\n RecNo() as AsciiNum\r\nautogenerate 255\r\n Where (RecNo()>=32 and RecNo()<=126) or RecNo()>=160 ;\r\n \r\nTransactions:\r\nLoad\r\n TransLineID, \r\n TransID,\r\n mod(TransID,26)+1 as Num,\r\n Pick(Ceil(3*Rand1),'A','B','C') as Dim1,\r\n Pick(Ceil(6*Rand1),'a','b','c','d','e','f') as Dim2,\r\n Pick(Ceil(3*Rand()),'X','Y','Z') as Dim3,\r\n Round(1000*Rand()*Rand()*Rand1) as Expression1,\r\n Round(  10*Rand()*Rand()*Rand1) as Expression2,\r\n Round(Rand()*Rand1,0.00001) as Expression3;\r\nLoad \r\n Rand() as Rand1,\r\n IterNo() as TransLineID,\r\n RecNo() as TransID\r\nAutogenerate 1000\r\n While Rand()<=0.5 or IterNo()=1;\r\n\r\n Comment Field Dim1 With \"This is a field comment\";"
+			}
+	},
+	{
+      "label": "TimerDelay",
+      "action": "thinktime",
+		"settings": {
+			"type": "uniform",
+			"mean": 5.0,
+			"dev": 2.5
+		}
+    },
+	{
+    "action": "reload",
+		"settings": {
+			"mode" : "default",
+			"partial": false
+		}
+	},
+	{
+      "label": "TimerDelay",
+      "action": "thinktime",
+		"settings": {
+			"type": "uniform",
+			"mean": 5.0,
+			"dev": 2.5
+		}
+    },
+	{
+    "action": "createsheet",
+		"settings": {
+			"title" : "GeneratedSheet",
+			"id" : "GeneratedSheet"
+		}
+	},
+	{
+      "label": "TimerDelay",
+      "action": "thinktime",
+		"settings": {
+			"type": "uniform",
+			"mean": 5.0,
+			"dev": 2.5
+		}
+    },
+	{
+     "label": "Change Sheet GeneratedSheet",
+     "action": "ChangeSheet",
+		"settings": {
+         "id": "GeneratedSheet"
+		}
+	},
+	{
+      "action": "createtable",
+      "label": "create mytable",
+            "settings": {
+				"sheet": "",
+                "title": "Mytable",
+				"dimensions" : ["Alpha"],
+                "measures" : ["Sum(Num)"],
+                "id" : "mytable1",
+                "row" : 0,
+                "col" : 1,
+				"rowspan" : 3,
+                "colspan" : 4
+            }
+    },
+	{
+      "label": "TimerDelay",
+      "action": "thinktime",
+		"settings": {
+			"type": "uniform",
+			"mean": 5.0,
+			"dev": 2.5
+		}
+    },
+	{
+      "action": "createtable",
+      "label": "create mytable2",
+            "settings": {
+				"sheet": "",
+                "title": "Mytable2",
+				"dimensions" : ["Alpha"],
+                "measures" : ["Sum(Num)"],
+                "id" : "mytable2",
+                "row" : 4,
+                "col" : 1,
+				"rowspan" : 3,
+                "colspan" : 4
+            }
+    },
+	{
+      "label": "TimerDelay",
+      "action": "thinktime",
+		"settings": {
+			"type": "uniform",
+			"mean": 5.0,
+			"dev": 2.5
+		}
+    },
+	{
+	"action": "iterated",
+      "label": "",
+      "settings": {
+        "iterations": 5,
+        "actions": [
+			{
+			"action": "duplicatesheet",
+			"label": "Duplicate sheet GeneratedSheet",
+					"settings": {
+					"id": "GeneratedSheet",
+					"save": false,
+					"changesheet": false
+					}
+			},
+			{
+			"label": "TimerDelay",
+			"action": "thinktime",
+					"settings": {
+						"type": "uniform",
+						"mean": 5.0,
+						"dev": 2.5
+					}
+			}
+		]
+		}
+	},
+
+	{
+     "label": "TimerDelay",
+     "action": "thinktime",
+     "settings": {
+         "type": "uniform",
+         "mean": 5.0,
+         "dev": 2.5
+     } 
+	}, 
+	
+	 {
+     "label": "PublishSheets",
+     "action": "publishsheet",
+		"settings": {
+			"mode": "sheetids",
+			"sheetIds": ["GeneratedSheet"]		
+		}
+	},
+	{
+     "label": "TimerDelay",
+     "action": "thinktime",
+		"settings": {
+         "type": "uniform",
+         "mean": 5.0,
+         "dev": 2.5
+		} 
+	}, 
+	{
+      "action": "ElasticDeleteApp",
+		"settings": {
+			"mode": "single",
+			"collectionname": "createapp",
+			"appname": "GopherCreated{{.Session}}"
+		}
+    }
+	]
+}
